@@ -1,0 +1,3 @@
+#use '#' at each line to write comments.
+#pattern:typedKeyword locId, if there are more than one search config, the first will be taken.
+junior developer 2421090
