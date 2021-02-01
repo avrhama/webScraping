@@ -50,6 +50,7 @@ class MyFirstGUI():
 			self.scanResultsTxt.see(tk.END)
 			jobItem='{} {}'.format(job['jobLocation'],job['jobTitle'],job['site'])
 			self.allfilteredJobsListBox.insert(tk.END,jobItem)
+			self.allFilterdJobs.append(job)
 			self.allfilteredJobsListBoxLock.release()
 	def loadAllFilteredJobs(self):
 		jobs=self.jdm.selectAllNotAppliedJobs()

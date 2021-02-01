@@ -4,7 +4,7 @@ class jobsFilter:
         self.name="j"
     def check(self,title,jobDescription):
         #for now is very naive filter.
-        experienceKeyword=['senior','experienced']
+        experienceKeyword=['senior','experienced','team leader','analyst','specialist']
         for keyword in experienceKeyword:
             if keyword in title:
                 return False
