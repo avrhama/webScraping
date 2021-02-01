@@ -8,8 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-           // "program": "${file}",
-           "program": "chromeSelenium.py",
+            "program": "${file}",
+           //"program": "chromeSelenium.py",
             "console": "integratedTerminal"
         }
     ]

@@ -2,6 +2,7 @@ from importlib import import_module
 import sys
 from bs4 import BeautifulSoup
 import requests,json
+from datetime import datetime, timedelta
 from time import sleep
 def dynamic_import(abs_module_path, class_name):
 	module_object = import_module(abs_module_path)
@@ -12,8 +13,9 @@ def importScript(package):
 		del sys.modules[package]
 	return dynamic_import(package,package)()
 class glassdoorModel:
-	def __init__(self,driver):
-		self.driver=driver
+	def __init__(self,addFilterJob,scanJobsFinished):
+		self.addFilterJob=addFilterJob
+		self.scanJobsFinished=scanJobsFinished
 		self.headers={
 		'Host':'www.glassdoor.com',
 		'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
@@ -26,7 +28,6 @@ class glassdoorModel:
 		'Cache-Control':'no-cache'
 		}
 		self.s=requests.session()
-		self.test2()
 	#this version use webrowser only
 	def test1(self):
 		print('test start...')
@@ -97,68 +98,79 @@ class glassdoorModel:
 
 
 		print('test finished!')
-	#this version use request and BeautifulSoup only 
-	def test2(self):
+	#this version use request and BeautifulSoup only
+	def stopScanJobs(self):
+		self.keepScaning=False
+	def scanJobs(self,jobTitle,cityName):
 		s=self.s
 		headers=self.headers
-		cityName='netanya'
 		cityInfoURL='https://www.glassdoor.com/findPopularLocationAjax.htm?term={}&maxLocationsToReturn=1'.format(cityName)
 		response=s.get(cityInfoURL,headers=headers)
 		response=json.loads(response.text)
+		if not response:
+			print("cant find the city:",cityName)
+			return
 		locationID=response[0]['locationId']
 		locationType=response[0]['locationType']
-		jobName='junior'
-		jobName=jobName.replace(' ','+')
-		url='https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&suggestChosen=false&clickSource=searchBtn&typedKeyword={}&sc.keyword={}&locT={}&locId={}&jobType='.format(jobName,jobName,locationType,locationID)
+		jobTitle=jobTitle.replace(' ','+')
+		url='https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&suggestChosen=false&clickSource=searchBtn&typedKeyword={}&sc.keyword={}&locT={}&locId={}&jobType='.format(jobTitle,jobTitle,locationType,locationID)
 		response=s.get(url,headers=headers)	
 		url=response.url			
 		urlPattern=url[:url.find('.htm')]+'_IP{}.htm?sortBy=date_desc'
 		pageIndex=2
-		keepScaning=True
+		self.keepScaning=True
 
-		while keepScaning:
+		todayDate=datetime.today()
+		while self.keepScaning:
 			sourceSoup = BeautifulSoup(response.text,features="lxml")
 			jobsElements=sourceSoup.body.find_all('li', attrs={'class': 'react-job-listing'})
 			if not jobsElements:
-				keepScaning=False
+				self.keepScaning=False
 			try:
 				jobs=[]
 				for jobEle in jobsElements:
-					jobId=jobEle.attrs['data-id']
+					jobId=jobEle.attrs['data-id']+'glassdoor'
 					jobLocation=jobEle.attrs['data-job-loc']
 					added=jobEle.find('div',attrs={'data-test':'job-age'}).text
 					jobLinkEle=jobEle.find('a',attrs={'data-test':'job-link'})
-					jobLink=jobLinkEle.attrs['href']
+					jobLink='https://www.glassdoor.com'+jobLinkEle.attrs['href']
 					jobTitle=jobLinkEle.contents[0].text
-					job={'jobID':jobId,'jobTitle':jobTitle,'added':added,'jobLink':jobLink,'jobLocation':jobLocation}
+					daysPassed=0
+					if added[-1]=='d':
+						daysPassed=int(added[:-1])
+					d = todayDate - timedelta(days=daysPassed)
+					timestamp = datetime.timestamp(d)
+					job={'jobID':jobId,'site':'glassdoor','jobTitle':jobTitle,'jobLocation':jobLocation,'jobLink':jobLink,'added':timestamp}
 					jobs.append(job)
 					if added[-1]=='d' and int(added[:-1])>=30:
-						keepScaning=False
+						self.keepScaning=False
 						break
 			except Exception as e:
 				print(e)
-			self.scanJobs(jobs)
+			self.filterJobs(jobs)
 			
-			url=urlPattern.format(pageIndex)			
-			if keepScaning:
+			url=urlPattern.format(pageIndex)	
+			if self.keepScaning:
 				print("getting page:",pageIndex)
 				response=s.get(urlPattern.format(pageIndex),headers=headers)
 			pageIndex+=1
 
 
 
-		print('test finished!')
-
+		print('scan finished!')
+		self.scanJobsFinished()
 	
-	def scanJobs(self,jobs):
+	def filterJobs(self,jobs):
 		s=self.s
 		headers=self.headers
 		#dynamically import, I can improve/fix the module on fly.
 		jobFilter=importScript('jobsFilter')
 		goodJobs=[]
 		for job in jobs:
+			if not self.keepScaning:
+				break
 			try:
-				jobLink='https://www.glassdoor.com'+job['jobLink']
+				jobLink=job['jobLink']
 				site=s.get(jobLink,headers=headers)
 				sourceSoup = BeautifulSoup(site.text,features="lxml")
 				jobDescription=sourceSoup.body.find('div', attrs={'id': 'JobDescriptionContainer'}).text
@@ -166,12 +178,12 @@ class glassdoorModel:
 				ans=jobFilter.check(jobTitle,jobDescription)
 				#print job details if matched
 				if ans:
-					msg='{}\nLocation:{} Title:{}\n{}\n{}'.format(100*'*',job['jobLocation'],jobTitle,jobLink,100*'*')
-					print(msg)
+					self.addFilterJob(job)
+					#msg='{}\nLocation:{} Title:{}\n{}\n{}'.format(100*'*',job['jobLocation'],jobTitle,jobLink,100*'*')
+					#print(msg)
 			except Exception as e:
 				print(e)
-		print(len(jobs))
-		print('scanJobs')
+		
 
 
 #this the job html element structure, helpful to understand what and how data we can achieve.
