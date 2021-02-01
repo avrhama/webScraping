@@ -38,6 +38,7 @@ class jobDBModel:
 			job={'jobID':record[0],'site':record[1],'jobTitle':record[2],'jobLocation':record[3],'jobLink':record[4],'added':record[5]}
 			return job
 	def appliedJob(self,jobID):
+		self.deleteExpiredJobs()
 		self.dbLock.acquire()
 		self.db.connect()
 		where='jobID="{}"'.format(jobID)

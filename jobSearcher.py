@@ -35,8 +35,10 @@ class MyFirstGUI():
 		self.allFilterdJobs=[]
 		self.jdm=jobDBModel('jobsDB.sqlite')
 		self.loadAllFilteredJobs()
+		chrome=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 		firefox="C:\\Program Files\\Mozilla Firefox\\firefox.exe"
-		webbrowser.register('firefox', None,webbrowser.BackgroundBrowser(firefox),preferred=1)
+		webbrowser.register('chrome', None,webbrowser.BackgroundBrowser(chrome),preferred=1)
+		#webbrowser.register('firefox', None,webbrowser.BackgroundBrowser(firefox),preferred=1)
 		self.allfilteredJobsListBoxLock=threading.Lock()
 		self.searchModels=[glassdoorModel(self.addFilterJob,self.scanJobsFinished)]
 	def addFilterJob(self,job):
@@ -70,9 +72,8 @@ class MyFirstGUI():
 	def openJobSite(self):
 		selection=self.allfilteredJobsListBox.curselection()
 		if selection:
-			print(selection)
 			jobLink=self.allFilterdJobs[selection[0]]['jobLink']
-			webbrowser.get('firefox').open_new_tab(jobLink)
+			webbrowser.get('chrome').open_new_tab(jobLink)
 		else:
 			print("none selected")
 	def appliedJob(self):
@@ -84,9 +85,10 @@ class MyFirstGUI():
 			self.jdm.appliedJob(jobID)
 			self.allfilteredJobsListBox.delete(selection)
 			self.allFilterdJobs.pop(selection[0])
+			print("allFilterdJobs: ",len(self.allFilterdJobs),"allfilteredJobsListBox:",self.allfilteredJobsListBox.size())
 		else:
 			print("none selected")
-		self.allfilteredJobsListBoxLock.relaese()
+		self.allfilteredJobsListBoxLock.release()
 if __name__ == '__main__':
 	root = Tk()
 	my_gui = MyFirstGUI(root)

@@ -173,8 +173,8 @@ class glassdoorModel:
 				jobLink=job['jobLink']
 				site=s.get(jobLink,headers=headers)
 				sourceSoup = BeautifulSoup(site.text,features="lxml")
-				jobDescription=sourceSoup.body.find('div', attrs={'id': 'JobDescriptionContainer'}).text
-				jobTitle=job['jobTitle']
+				jobDescription=sourceSoup.body.find('div', attrs={'id': 'JobDescriptionContainer'}).text.lower()
+				jobTitle=job['jobTitle'].lower()
 				ans=jobFilter.check(jobTitle,jobDescription)
 				#print job details if matched
 				if ans:
