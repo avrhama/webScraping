@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests,json
 from datetime import datetime, timedelta
 from time import sleep
+import urllib.parse
 def dynamic_import(abs_module_path, class_name):
 	module_object = import_module(abs_module_path)
 	target_class = getattr(module_object, class_name)
@@ -28,82 +29,15 @@ class glassdoorModel:
 		'Cache-Control':'no-cache'
 		}
 		self.s=requests.session()
-	#this version use webrowser only
-	def test1(self):
-		print('test start...')
-		driver=self.driver
-		#KeywordSearch
-		url='https://www.glassdoor.com/Job/tel-aviv-yafo-junior-developer-jobs-SRCH_IL.0,13_IC2421096_KO14,30.htm'
-		searchConfig={'locId':2421096,'typedKeyword':'junior+developer','city':'netanya'}
-		
-		url='https://www.glassdoor.com/Job/jobs,30_IP1.htm?suggestCount=0&sortBy=date_desc&suggestChosen=false&clickSource=searchBtn&typedKeyword={typedKeyword}&sc.keyword={typedKeyword}&locT=C&locId={locId}&jobType='.format(**searchConfig)
-		url='https://www.glassdoor.com/Jobs/Glassdoor-Jobs-E100431.htm'
-		driver.get(url)
-		print("stage 1")
-		keywordElement=driver.find_element_by_id('sc.keyword')
-		locationElement=driver.find_element_by_id('sc.location')
-		btnSearchElement=driver.find_element_by_id('HeroSearchButton')
-		script='''
-		arguments[0].setAttribute('value',arguments[1]);
-		arguments[2].setAttribute('value',arguments[3]);
-		arguments[4].click();
-		'''
-		oldUrl=driver.current_url
-		driver.execute_script(script,keywordElement,searchConfig['typedKeyword'],locationElement,searchConfig['city'],btnSearchElement)
-		print("stage 2")
-		while oldUrl==driver.current_url:
-			print(oldUrl)
-			print(driver.current_url)
-			sleep(1)
-		url=driver.current_url
-		oldUrl=driver.current_url
-		driver.get(url+'&sortBy=date_desc')
-		print("stage 3")
-		while oldUrl==driver.current_url:
-			sleep(1)
-		url=driver.current_url
-		urlPattern=url[:-21]+'_IP{}.htm?sortBy=date_desc'
-		print("stage 4")
-		#sleep(3)
-		pageIndex=2
-		keepScaning=True
 
-		while keepScaning:
-			jobsElements=driver.find_elements_by_xpath('//li[contains(@class, "react-job-listing")]')
-			if not jobsElements:
-				keepScaning=False
-			try:
-				jobs=[]
-				for ele in jobsElements:
-						jobId=ele.get_attribute('data-id')
-						title=ele.find_element_by_xpath('div[2]/a/span').get_attribute('innerText').lower()
-						added=ele.find_element_by_xpath('div[2]/div[2]/div/div[2]').get_attribute('innerText')
-						jobLink=ele.find_element_by_xpath('div[1]/a').get_attribute('href')
-						job={'jobID':jobId,'title':title,'added':added,'jobLink':jobLink}
-						jobs.append(job)
-						if added[-1]=='d' and int(added[:-1])>=30:
-							keepScaning=False
-							break
-						#print(title,added)
-			except Exception as e:
-				print(e)
-			self.scanJobs(jobs)
-			print(len(jobsElements))
-			url=urlPattern.format(pageIndex)
-			print(url)
-			print("get page ",pageIndex)
-			if keepScaning:
-				driver.get(url)
-			pageIndex+=1
-
-
-		print('test finished!')
-	#this version use request and BeautifulSoup only
+	
 	def stopScanJobs(self):
 		self.keepScaning=False
+	#this version use request and BeautifulSoup only
 	def scanJobs(self,jobTitle,cityName):
 		s=self.s
 		headers=self.headers
+		cityName=urllib.parse.quote(cityName)
 		cityInfoURL='https://www.glassdoor.com/findPopularLocationAjax.htm?term={}&maxLocationsToReturn=1'.format(cityName)
 		response=s.get(cityInfoURL,headers=headers)
 		response=json.loads(response.text)

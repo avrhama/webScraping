@@ -5,6 +5,7 @@ from jobDBModel import jobDBModel
 import webbrowser,threading
 from glassdoorModel import glassdoorModel
 from linkedinModel import linkedinModel
+from indeedModel import indeedModel
 class MyFirstGUI():
 	def __init__(self, master):
 		self.master = master
@@ -43,7 +44,8 @@ class MyFirstGUI():
 		self.locker=threading.Lock()
 		self.searchModels=[
 			glassdoorModel(self.addFilterJob,self.scanJobsFinished),
-			linkedinModel(self.addFilterJob,self.scanJobsFinished)
+			linkedinModel(self.addFilterJob,self.scanJobsFinished),
+			indeedModel(self.addFilterJob,self.scanJobsFinished)
 			]
 	def addFilterJob(self,job):
 		exists=self.jdm.insertJob(job)

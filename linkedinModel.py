@@ -38,6 +38,7 @@ class linkedinModel:
 	def scanJobs(self,jobTitle,cityName):
 		s=self.s
 		headers=self.headers
+		cityName=urllib.parse.quote(cityName)
 		cityInfoURL='https://www.linkedin.com/organization-guest/api/typeaheadHits?query={}&typeaheadType=GEO&geoTypes=POPULATED_PLACE,ADMIN_DIVISION_2,MARKET_AREA,COUNTRY_REGION'.format(cityName)
 		response=s.get(cityInfoURL,headers=headers)
 		response=json.loads(response.text)
