@@ -4,6 +4,7 @@ import _thread as thread
 from jobDBModel import jobDBModel
 import webbrowser,threading
 from glassdoorModel import glassdoorModel
+from linkedinModel import linkedinModel
 class MyFirstGUI():
 	def __init__(self, master):
 		self.master = master
@@ -39,19 +40,22 @@ class MyFirstGUI():
 		firefox="C:\\Program Files\\Mozilla Firefox\\firefox.exe"
 		webbrowser.register('chrome', None,webbrowser.BackgroundBrowser(chrome),preferred=1)
 		#webbrowser.register('firefox', None,webbrowser.BackgroundBrowser(firefox),preferred=1)
-		self.allfilteredJobsListBoxLock=threading.Lock()
-		self.searchModels=[glassdoorModel(self.addFilterJob,self.scanJobsFinished)]
+		self.locker=threading.Lock()
+		self.searchModels=[
+			glassdoorModel(self.addFilterJob,self.scanJobsFinished),
+			linkedinModel(self.addFilterJob,self.scanJobsFinished)
+			]
 	def addFilterJob(self,job):
 		exists=self.jdm.insertJob(job)
 		if not exists:
-			self.allfilteredJobsListBoxLock.acquire()
-			jobMsg='Location:{} Title:{}'.format(job['jobLocation'],job['jobTitle'])
+			self.locker.acquire()
+			jobMsg='site:{} Location:{} Title:{}'.format(job['site'],job['jobLocation'],job['jobTitle'])
 			self.scanResultsTxt.insert(tk.END,jobMsg+"\n")
 			self.scanResultsTxt.see(tk.END)
 			jobItem='{} {}'.format(job['jobLocation'],job['jobTitle'],job['site'])
 			self.allfilteredJobsListBox.insert(tk.END,jobItem)
 			self.allFilterdJobs.append(job)
-			self.allfilteredJobsListBoxLock.release()
+			self.locker.release()
 	def loadAllFilteredJobs(self):
 		jobs=self.jdm.selectAllNotAppliedJobs()
 		if jobs:
@@ -61,15 +65,23 @@ class MyFirstGUI():
 				self.allfilteredJobsListBox.insert(tk.END,jobItem)
 	def scan(self):
 		if self.scanBtn['text']=='scan':
+			self.waitforModelscounter=len(self.searchModels)
 			self.scanBtn['text']='stop'
 			print("scanning...")
 			cityName=self.jobCityTxt.get("1.0",tk.END)[:-1]
 			jobTitle=self.jobTitleTxt.get("1.0",tk.END)[:-1]
-			thread.start_new_thread(self.searchModels[0].scanJobs,(jobTitle,cityName))
+			for searchModel in self.searchModels:
+				thread.start_new_thread(searchModel.scanJobs,(jobTitle,cityName))
 		else:
-			self.searchModels[0].stopScanJobs()
+			for searchModel in self.searchModels:
+				searchModel.stopScanJobs()
+			
 	def scanJobsFinished(self):
-		self.scanBtn['text']='scan'
+		self.locker.acquire()
+		self.waitforModelscounter-=1
+		self.locker.release()
+		if self.waitforModelscounter==0:
+			self.scanBtn['text']='scan'
 	def openJobSite(self):
 		selection=self.allfilteredJobsListBox.curselection()
 		if selection:
@@ -78,8 +90,7 @@ class MyFirstGUI():
 		else:
 			print("none selected")
 	def appliedJob(self):
-		print("applied")
-		self.allfilteredJobsListBoxLock.acquire()
+		self.locker.acquire()
 		selection=self.allfilteredJobsListBox.curselection()
 		if selection:
 			jobID=self.allFilterdJobs[selection[0]]['jobID']
@@ -89,7 +100,7 @@ class MyFirstGUI():
 			print("allFilterdJobs: ",len(self.allFilterdJobs),"allfilteredJobsListBox:",self.allfilteredJobsListBox.size())
 		else:
 			print("none selected")
-		self.allfilteredJobsListBoxLock.release()
+		self.locker.release()
 if __name__ == '__main__':
 	root = Tk()
 	my_gui = MyFirstGUI(root)

@@ -157,7 +157,7 @@ class glassdoorModel:
 
 
 
-		print('scan finished!')
+		print('glassdoor scan finished!')
 		self.scanJobsFinished()
 	
 	def filterJobs(self,jobs):
