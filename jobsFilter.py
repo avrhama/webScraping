@@ -2,11 +2,10 @@ class jobsFilter:
 	def __init__(self):
 		self.printFailedLine=False
 	def check(self,title,jobDescription):
-		engResult=self.checkInEng(title,jobDescription)
-		if engResult:
+		#checks if jobDescription contins hebrew characters
+		if any("\u0590" <= c <= "\u05EA" for c in jobDescription):
 			return self.checkInHeb(title,jobDescription)
-		else:
-			return False
+		return self.checkInEng(title,jobDescription)
 	def checkInEng(self,title,jobDescription):
 		#for now is very naive filter.
 		experienceKeyword=['senior','experienced','team leader','analyst','specialist']

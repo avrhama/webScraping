@@ -36,6 +36,7 @@ class linkedinModel:
 	def stopScanJobs(self):
 		self.keepScaning=False
 	def scanJobs(self,jobTitle,cityName):
+		print("scaning linkedin...")
 		s=self.s
 		headers=self.headers
 		cityName=urllib.parse.quote(cityName)
@@ -75,7 +76,7 @@ class linkedinModel:
 						timestamp = datetime.timestamp(d)				
 						job={'jobID':jobId,'site':'linkedin','jobTitle':jobTitle,'jobLocation':jobLocation,'jobLink':jobLink,'added':timestamp}
 						jobs.append(job)
-			except Exception as e:
+			except:
 				traceback.print_exc()
 			self.filterJobs(jobs)
 			if self.keepScaning:
@@ -105,5 +106,5 @@ class linkedinModel:
 				ans=jobFilter.check(jobTitle,jobDescription)
 				if ans:
 					self.addFilterJob(job)
-			except Exception as e:
-				print(e)
+			except:
+				traceback.print_exc()

@@ -36,6 +36,7 @@ class indeedModel:
 	def stopScanJobs(self):
 		self.keepScaning=False
 	def scanJobs(self,jobTitle,cityName):
+		print("scaning indeed...")
 		s=self.s
 		headers=self.headers
 		cityName=urllib.parse.quote(cityName)
@@ -63,7 +64,7 @@ class indeedModel:
 				break
 			jobsElements=sourceSoup.body.find_all('div', attrs={'class': 'jobsearch-SerpJobCard'})			
 			jobs=[]
-			
+			print(len(jobsElements))
 			try:			
 				for jobEle in jobsElements:								
 						jobId=jobEle.attrs['id']+'indded'
@@ -78,7 +79,7 @@ class indeedModel:
 						timestamp = datetime.timestamp(d)
 						job={'jobID':jobId,'site':'linkedin','jobTitle':jobTitle,'jobLocation':jobLocation,'jobLink':jobLink,'added':timestamp}				
 						jobs.append(job)
-			except Exception as e:
+			except :
 				traceback.print_exc()
 			self.filterJobs(jobs)
 			navigationEle=sourceSoup.body.find_all('ul', attrs={'class': 'pagination-list'})
@@ -107,12 +108,12 @@ class indeedModel:
 				jobLink=job['jobLink']
 				site=s.get(jobLink,headers=headers)
 				sourceSoup = BeautifulSoup(site.text,features="lxml")
-				jobDescription=sourceSoup.body.find('div', attrs={'id': 'jobDescriptionText'}).text.lower()
+				jobDescription=sourceSoup.body.find(attrs={'id': 'jobDescriptionText'}).text.lower()
 				jobTitle=job['jobTitle'].lower()
 				ans=jobFilter.check(jobTitle,jobDescription)
 				if ans:
 					self.addFilterJob(job)
-			except Exception as e:
+			except :
 				traceback.print_exc()
 	def getDaysPassed(self,added):
 		if added=='פורסם זה עתה' or 'היום'==added:
@@ -120,3 +121,5 @@ class indeedModel:
 		added=added.replace('+','')
 		days= [int(s) for s in added.split() if s.isdigit()]
 		return days[0]
+
+

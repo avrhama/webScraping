@@ -5,6 +5,7 @@ import requests,json
 from datetime import datetime, timedelta
 from time import sleep
 import urllib.parse
+import traceback
 def dynamic_import(abs_module_path, class_name):
 	module_object = import_module(abs_module_path)
 	target_class = getattr(module_object, class_name)
@@ -35,6 +36,7 @@ class glassdoorModel:
 		self.keepScaning=False
 	#this version use request and BeautifulSoup only
 	def scanJobs(self,jobTitle,cityName):
+		print("scaning glassdoor...")
 		s=self.s
 		headers=self.headers
 		cityName=urllib.parse.quote(cityName)
@@ -79,8 +81,8 @@ class glassdoorModel:
 					if added[-1]=='d' and int(added[:-1])>=30:
 						self.keepScaning=False
 						break
-			except Exception as e:
-				print(e)
+			except :
+				traceback.print_exc()
 			self.filterJobs(jobs)
 			
 			url=urlPattern.format(pageIndex)	
@@ -115,8 +117,8 @@ class glassdoorModel:
 					self.addFilterJob(job)
 					#msg='{}\nLocation:{} Title:{}\n{}\n{}'.format(100*'*',job['jobLocation'],jobTitle,jobLink,100*'*')
 					#print(msg)
-			except Exception as e:
-				print(e)
+			except :
+				traceback.print_exc()
 		
 
 
